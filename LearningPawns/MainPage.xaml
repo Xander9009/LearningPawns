@@ -6,9 +6,110 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" SizeChanged="Page_SizeChanged" Width="Auto" Height="Auto">
 
-    <Grid>
+    <Grid x:Name="PageGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Column="1" Background="White" Opacity="0" >
+            <Grid HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch"/>
+        </Border>
+
+        <Border Background="Aqua" >
+            <StackPanel HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
+                <Button x:Name="Begin" Content="Begin" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" Click="Begin_Click" />
+                <Button x:Name="Restart" Content="Restart" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" />
+                <Button x:Name="Reset" Content="Reset" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" Click="Reset_Click" />
+                <Grid VerticalAlignment="Top" Height="300" Width="300" HorizontalAlignment="Left" Margin="0,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="1" Background="LightGray" />
+                    <Border Grid.Row="1" Background="LightGray" />
+                    <Border Grid.Row="1" Grid.Column="2" Background="LightGray" />
+                    <Border Grid.Row="2" Grid.Column="1" Background="LightGray" />
+                    <Border Background="White" />
+                    <Border Grid.Column="2" Background="White" />
+                    <Border Grid.Row="1" Grid.Column="1" Background="White" />
+                    <Border Grid.Row="2" Background="White" />
+                    <Border Grid.Row="2" Grid.Column="2" Background="White" />
+                    <Canvas x:Name="Matchbox" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
+                        <Ellipse x:Name="emA1" Fill="Red" Height="50" Width="50" Margin="25, 25, 0, 0" />
+                        <Ellipse x:Name="emA2" Fill="Red" Height="50" Width="50" Margin="125, 25, 0, 0" />
+                        <Ellipse x:Name="emA3" Fill="Red" Height="50" Width="50" Margin="225, 25, 0, 0" />
+                        <Ellipse x:Name="emB1" Fill="Blue" Height="50" Width="50" Margin="25, 225, 0, 0" />
+                        <Ellipse x:Name="emB2" Fill="Blue" Height="50" Width="50" Margin="125, 225, 0, 0" />
+                        <Ellipse x:Name="emB3" Fill="Blue" Height="50" Width="50" Margin="225, 225, 0, 0" />
+                    </Canvas>
+                </Grid>
+                <TextBlock x:Name="StatusText" FontWeight="Bold" FontSize="16" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <Grid x:Name="Board" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" PointerMoved="Grid_PointerMoved">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Border Grid.Row="1" Background="LightGray" />
+            <Border Grid.Column="1" Background="LightGray" />
+            <Border Grid.Row="1" Grid.Column="2" Background="LightGray" />
+            <Border Grid.Row="2" Grid.Column="1" Background="LightGray" />
+
+
+            <Ellipse Grid.Column="0" Grid.Row="0" x:Name="eA1" Fill="Red" Height="150" Width="150" />
+            <Ellipse Grid.Column="1" Grid.Row="0" x:Name="eA2" Fill="Red" Height="150" Width="150" />
+            <Ellipse Grid.Column="2" Grid.Row="0" x:Name="eA3" Fill="Red" Height="150" Width="150" />
+            <Ellipse Grid.Column="0" Grid.Row="2" x:Name="eB1" Fill="Blue" Height="150" Width="150" />
+            <Ellipse Grid.Column="1" Grid.Row="2" x:Name="eB2" Fill="Blue" Height="150" Width="150" />
+            <Ellipse Grid.Column="2" Grid.Row="2" x:Name="eB3" Fill="Blue" Height="150" Width="150" />
+            <Polygon Grid.Column="0" Grid.Row="0" x:Name="Move1112" Fill="Black" Points="200,333 250,283 150,283" Tapped="Move_Tapped" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+            <Polygon Grid.Column="0" Grid.Row="0" x:Name="Move1122" Fill="Black" Points="295,295 245,295 295,245" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2112" Fill="Black" Points="305,295 305,245 355,295" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2122" Fill="Black" Points="450,295 490,255 410,255" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2132" Fill="Black" Points="595,295 545,295 595,245" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3122" Fill="Black" Points="605,295 605,245 655,295" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3132" Fill="Black" Points="750,295 790,255 710,255" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move1211" Fill="Black" Points="150,305 190,345 110,345" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move1221" Fill="Black" Points="295,305 295,355 245,305" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2211" Fill="Black" Points="305,305 305,355 355,305" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2221" Fill="Black" Points="450,305 490,345 410,345" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2231" Fill="Black" Points="595,305 595,355 545,305" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3221" Fill="Black" Points="605,305 605,355 655,305" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3231" Fill="Black" Points="750,305 790,345 710,345" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move1213" Fill="Black" Points="150,595 190,555 110,555" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move1223" Fill="Black" Points="295,595 245,595 295,545" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2213" Fill="Black" Points="305,595 305,545 355,595" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2223" Fill="Black" Points="450,595 490,555 410,555" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2233" Fill="Black" Points="595,595 545,595 595,545" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3223" Fill="Black" Points="605,595 605,545 655,595" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3233" Fill="Black" Points="750,595 790,555 710,555" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move1312" Fill="Black" Points="150,605 190,645 110,645" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move1322" Fill="Black" Points="295,605 295,655 245,605" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2312" Fill="Black" Points="305,605 305,655 355,605" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2322" Fill="Black" Points="450,605 490,645 410,645" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move2332" Fill="Black" Points="595,605 595,655 545,605" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3322" Fill="Black" Points="605,605 605,655 655,605" Tapped="Move_Tapped"  />
+            <Polygon x:Name="Move3332" Fill="Black" Points="750,605 790,645 710,645" Tapped="Move_Tapped"  />
+        </Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
     </Grid>
 </Page>

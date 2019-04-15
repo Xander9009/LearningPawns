@@ -6,23 +6,20 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" SizeChanged="Page_SizeChanged" Width="Auto" Height="Auto">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" SizeChanged="Page_SizeChanged" Width="Auto" Height="Auto" Loaded="Page_Loaded">
 
     <Grid x:Name="PageGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Border Grid.Column="1" Background="White" Opacity="0" >
-            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        </Border>
-
         <Border Background="Aqua" >
             <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <Button x:Name="Begin" Content="Begin" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" Click="Begin_Click" />
-                <Button x:Name="Restart" Content="Restart" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" />
+                <Button x:Name="Restart" Content="Restart" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" Click="Restart_Click" />
                 <Button x:Name="Reset" Content="Reset" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" Click="Reset_Click" />
+                <Button x:Name="Auto" Content="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="100" FontSize="48" FontWeight="Bold" Click="Auto_Click"/>
                 <TextBlock x:Name="StatusText" FontWeight="Bold" FontSize="16" TextWrapping="Wrap" Text="P: 0 -- C: 0" />
+                <TextBox x:Name="AutoDelayBox" FontWeight="Bold" FontSize="16" Text="1000" InputScope="Number" TextChanged="AutoDelayBox_TextChanged" />
             </StackPanel>
         </Border>
 
-        <Grid x:Name="Board" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" PointerMoved="Grid_PointerMoved">
+        <Grid x:Name="Board" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />

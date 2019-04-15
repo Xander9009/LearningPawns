@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
+using Windows.System.Threading;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -24,12 +20,11 @@ namespace LearningPawns
     public sealed partial class MainPage : Page
     {
         static public List<List<Coord>> BoardState = new List<List<Coord>>();
-        static public List<List<Coord>> MatchboxState = new List<List<Coord>>();
         static public List<Move> Moves = new List<Move>();
-        static bool DoOnce = false;
-        static bool mDoOnce = false;
-        public int Wins = 0;
-        public int Losses = 0;
+        static public List<MoveState> LosingMoves = new List<MoveState>();
+        static public MoveState PreviousMoveState;
+        public int PlayerWins = 0;
+        public int CPUWins = 0;
         private string s;
         public string Status
         {
@@ -43,85 +38,77 @@ namespace LearningPawns
         private bool PlayersTurn = true;
         public Grid GameBoard;
         public bool GameActive = false;
+        public bool AutoActive = false;
+        public int AutoDelay = 1000;
 
         private static double InitialHeight = 120;
-        private static double InitialWidth= 163;
+        private static double InitialWidth = 163;
 
-        public Piece A1;
-        public Piece A2;
-        public Piece A3;
-        public Piece B1;
-        public Piece B2;
-        public Piece B3;
+        private Move LastPlayerMove;
+        private Move LastCPUMove;
+
+        static public Piece[] Pieces;
+        static public Piece A1;
+        static public Piece A2;
+        static public Piece A3;
+        static public Piece B1;
+        static public Piece B2;
+        static public Piece B3;
 
         public MainPage()
         {
             this.InitializeComponent();
 
-            A1 = new Piece() { Circle = eA1 };
-            A2 = new Piece() { Circle = eA2 };
-            A3 = new Piece() { Circle = eA3 };
-            B1 = new Piece() { Circle = eB1, IsHuman = true };
-            B2 = new Piece() { Circle = eB2, IsHuman = true };
-            B3 = new Piece() { Circle = eB3, IsHuman = true };
+            A1 = new Piece() { Circle = eA1, IsHuman = true };
+            A2 = new Piece() { Circle = eA2, IsHuman = true };
+            A3 = new Piece() { Circle = eA3, IsHuman = true };
+            B1 = new Piece() { Circle = eB1 };
+            B2 = new Piece() { Circle = eB2 };
+            B3 = new Piece() { Circle = eB3 };
+
+            Pieces = new Piece[] { A1, A2, A3, B1, B2, B3 };
         }
 
-        private void SetBoardCoordinates()
+        private void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            UpdateBoardCoordinates();
+            GameBoard = Board;
+
+            var A = (this.Parent as Frame).Parent as Border;
+            var CurrentWidth = (A.Width - PageGrid.ColumnDefinitions[0].Width.Value) / 6;
+            var CurrentHeight = A.Height / 6;
+            float Scale = CurrentWidth / InitialWidth <= CurrentHeight / InitialHeight ? (float)(CurrentWidth / InitialWidth) : (float)(CurrentHeight / InitialHeight);
+            foreach (var P in new Piece[] { A1, A2, A3, B1, B2, B3 })
+            {
+                P.Refresh(Scale * InitialHeight);
+            }
+
             BoardState = new List<List<Coord>>() { new List<Coord>() { new Coord() { C = 1, R = 1 }, new Coord() { C = 2, R = 1 }, new Coord() { C = 3, R = 1 } },
                                                    new List<Coord>() { new Coord() { C = 1, R = 2 }, new Coord() { C = 2, R = 2 }, new Coord() { C = 3, R = 2 } },
                                                    new List<Coord>() { new Coord() { C = 1, R = 3 }, new Coord() { C = 2, R = 3 }, new Coord() { C = 3, R = 3 } }
             };
 
-            A1.Coordinates = BoardState[0][0];
-            A2.Coordinates = BoardState[0][1];
-            A3.Coordinates = BoardState[0][2];
-            B1.Coordinates = BoardState[2][0];
-            B2.Coordinates = BoardState[2][1];
-            B3.Coordinates = BoardState[2][2];
+            ResetBoard();
 
-            Moves.Add(new Move() { Arrow = Move1112, Start = BoardState[0][0], End = BoardState[1][0] });
-            Moves.Add(new Move() { Arrow = Move1122, Start = BoardState[0][0], End = BoardState[1][1] });
-            Moves.Add(new Move() { Arrow = Move2112, Start = BoardState[0][1], End = BoardState[1][0] });
-            Moves.Add(new Move() { Arrow = Move2122, Start = BoardState[0][1], End = BoardState[1][1] });
-            Moves.Add(new Move() { Arrow = Move2132, Start = BoardState[0][1], End = BoardState[1][2] });
-            Moves.Add(new Move() { Arrow = Move3122, Start = BoardState[0][2], End = BoardState[1][1] });
-            Moves.Add(new Move() { Arrow = Move3132, Start = BoardState[0][2], End = BoardState[1][2] });
-            Moves.Add(new Move() { Arrow = Move1211, Start = BoardState[1][0], End = BoardState[0][0] });
-            Moves.Add(new Move() { Arrow = Move1221, Start = BoardState[1][0], End = BoardState[0][1] });
-            Moves.Add(new Move() { Arrow = Move2211, Start = BoardState[1][1], End = BoardState[0][0] });
-            Moves.Add(new Move() { Arrow = Move2221, Start = BoardState[1][1], End = BoardState[0][1] });
-            Moves.Add(new Move() { Arrow = Move2231, Start = BoardState[1][1], End = BoardState[0][2] });
-            Moves.Add(new Move() { Arrow = Move3221, Start = BoardState[1][2], End = BoardState[0][1] });
-            Moves.Add(new Move() { Arrow = Move3231, Start = BoardState[1][2], End = BoardState[0][2] });
-            Moves.Add(new Move() { Arrow = Move1213, Start = BoardState[1][2], End = BoardState[2][0] });
-            Moves.Add(new Move() { Arrow = Move1223, Start = BoardState[1][2], End = BoardState[2][1] });
-            Moves.Add(new Move() { Arrow = Move2213, Start = BoardState[1][1], End = BoardState[2][0] });
-            Moves.Add(new Move() { Arrow = Move2223, Start = BoardState[1][1], End = BoardState[2][1] });
-            Moves.Add(new Move() { Arrow = Move2233, Start = BoardState[1][1], End = BoardState[2][2] });
-            Moves.Add(new Move() { Arrow = Move3223, Start = BoardState[1][2], End = BoardState[2][1] });
-            Moves.Add(new Move() { Arrow = Move3233, Start = BoardState[1][2], End = BoardState[2][2] });
-            Moves.Add(new Move() { Arrow = Move1312, Start = BoardState[2][0], End = BoardState[1][0] });
-            Moves.Add(new Move() { Arrow = Move1322, Start = BoardState[2][0], End = BoardState[1][1] });
-            Moves.Add(new Move() { Arrow = Move2312, Start = BoardState[2][1], End = BoardState[1][0] });
-            Moves.Add(new Move() { Arrow = Move2322, Start = BoardState[2][1], End = BoardState[1][1] });
-            Moves.Add(new Move() { Arrow = Move2332, Start = BoardState[2][1], End = BoardState[1][2] });
-            Moves.Add(new Move() { Arrow = Move3322, Start = BoardState[2][2], End = BoardState[1][1] });
-            Moves.Add(new Move() { Arrow = Move3332, Start = BoardState[2][2], End = BoardState[1][2] });
-
-            foreach (var M in Moves)
+            foreach (var Elem in Board.Children)
             {
-                M.InitialPoints = M.Arrow.Points;
+                if ((Elem as Polygon) != null)
+                {
+                    var Arrow = Elem as Polygon;
+                    int[] Coords = Arrow.Name.Substring(4).ToCharArray().Select(x => int.Parse(x.ToString())).ToArray();
+                    var Move = new Move() { Arrow = Arrow, Start = BoardState[Coords[1] - 1][Coords[0] - 1], End = BoardState[Coords[3] - 1][Coords[2] - 1] };
+                    Moves.Add(Move);
+                    Move.InitialPoints = Move.Arrow.Points;
+                    Move.Refresh(CurrentWidth, CurrentHeight);
+                }
             }
+
+            GameActive = true;
+            MovePlayer();
         }
 
         private void UpdateBoardCoordinates()
         {
-            if (!DoOnce)
-            {
-                ResetBoard();
-            }
-
             var A = (this.Parent as Frame).Parent as Border;
             var W = A.Width - PageGrid.ColumnDefinitions[0].Width.Value;
             var H = A.Height;
@@ -144,8 +131,6 @@ namespace LearningPawns
 
         private void ResetBoard()
         {
-            SetBoardCoordinates();
-
             GetCoord(1, 1).SetPiece(A1);
             GetCoord(2, 1).SetPiece(A2);
             GetCoord(3, 1).SetPiece(A3);
@@ -163,112 +148,192 @@ namespace LearningPawns
             return null;
         }
 
-        public Coord GetMCoord(int C, int R)
-        {
-            if (C >= 1 && R >= 1 && C <= 3 && R <= 3)
-            {
-                return MatchboxState[R - 1][C - 1];
-            }
-            return null;
-        }
-
-        private void Begin_Click(object sender, RoutedEventArgs e)
-        {
-            if (!GameActive)
-            {
-                ResetBoard();
-                GameActive = true;
-                MovePlayer();
-            }
-        }
-
         private void MovePlayer()
         {
-            //PlayersTurn = true;
-            FindMoves();
+            PlayersTurn = true;
+            var ValidMoves = FindMoves();
+            if (AutoActive && ValidMoves.Count > 0)
+            {
+                Move ChosenMove = ValidMoves[new Random().Next(ValidMoves.Count)];
+                ChosenMove.Arrow.Fill = new SolidColorBrush(Windows.UI.Colors.Red);
+                ThreadPoolTimer PeriodicTimer = ThreadPoolTimer.CreateTimer((source) =>
+                {
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    Dispatcher.RunAsync(CoreDispatcherPriority.High,
+                        () =>
+                        {
+                            ChosenMove.Perform();
+                            PlayersTurn = true;
+                            MoveComputer();
+                        });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                }, TimeSpan.FromMilliseconds(AutoDelay));
+            }
+            else if (AutoActive)
+            {
+                GameActive = true;
+                PlayersTurn = true;
+                ResetBoard();
+                ThreadPoolTimer PeriodicTimer = ThreadPoolTimer.CreateTimer((source) =>
+                {
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    Dispatcher.RunAsync(CoreDispatcherPriority.High,
+                        () =>
+                        {
+                            MovePlayer();
+                        });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                }, TimeSpan.FromMilliseconds(AutoDelay));
+            }
         }
 
         private void MoveComputer()
         {
-            //PlayersTurn = false;
-            FindMoves();
-        }
+            PlayersTurn = false;
 
-        private void FindMoves()
-        {
-            Piece[] Pieces;
-            if (PlayersTurn)
+            var ValidMoves = FindMoves();
+            if (ValidMoves.Count > 0)
             {
-                Pieces = new Piece[] { A1, A2, A3 };
+                Move ChosenMove = ValidMoves[new Random().Next(ValidMoves.Count)];
+                ChosenMove.Arrow.Fill = new SolidColorBrush(Windows.UI.Colors.Blue);
+
+                ThreadPoolTimer PeriodicTimer = ThreadPoolTimer.CreateTimer((source) =>
+                {
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    Dispatcher.RunAsync(CoreDispatcherPriority.High,
+                        () =>
+                        {
+                                ChosenMove.Perform();
+                                PlayersTurn = true;
+                                MovePlayer();
+                        });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+                }, TimeSpan.FromMilliseconds(AutoDelay));
             }
             else
             {
-                Pieces = new Piece[] { B1, B2, B3 };
+                PlayersTurn = true;
+                if (AutoActive)
+                {
+                    GameActive = true;
+                    ResetBoard();
+                    ThreadPoolTimer PeriodicTimer = ThreadPoolTimer.CreateTimer((source) =>
+                    {
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                        Dispatcher.RunAsync(CoreDispatcherPriority.High,
+                            () =>
+                            {
+                                MovePlayer();
+                            });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    }, TimeSpan.FromMilliseconds(AutoDelay));
+                }
             }
-            foreach (var item in Moves)
+        }
+
+        private List<Move> FindMoves()
+        {
+            List<Move> ValidMoves = new List<Move>();
+            Piece[] lPieces;
+            MoveState MS = new MoveState(Pieces);;
+            if (PlayersTurn)
             {
-                item.Activate(false);
+                lPieces = new Piece[] { A1, A2, A3 };
             }
-            bool HasValidMoves = false;
-            foreach (var P in Pieces)
+            else
+            {
+                lPieces = new Piece[] { B1, B2, B3 };
+            }
+            foreach (var Move in Moves)
+            {
+                Move.State = Move.States.Inactive;
+            }
+            if (!GameActive) { return ValidMoves; }
+
+            foreach (var P in lPieces)
             {
                 if (P.Circle.Visibility != Visibility.Visible) { continue; }
-                int R = P.R - 1;
+                int R = P.R + 1;
                 if (!P.IsHuman)
                 {
-                    R = P.R + 1;
+                    R = P.R - 1;
                 }
 
                 var End = GetCoord(P.C - 1, R);
                 if (End != null && (End.Piece != null && End.Piece.IsHuman != P.IsHuman))
                 {
-                    foreach (var item in Moves)
+                    foreach (var Move in Moves)
                     {
-                        if (item.Start == P.Coordinates && item.End == End)
+                        if (Move.Start == P.Coordinates && Move.End == End)
                         {
-                            item.Activate();
-                            HasValidMoves = true;
+                            if (CheckMoveStateValid(MS, Move))
+                            {
+                                ValidMoves.Add(Move);
+                                Move.State = Move.States.Active;
+                            }
                         }
                     }
                 }
                 End = GetCoord(P.C, R);
                 if (End != null && End.Piece == null)
                 {
-                    foreach (var item in Moves)
+                    foreach (var Move in Moves)
                     {
-                        if (item.Start == P.Coordinates && item.End == End)
+                        if (Move.Start == P.Coordinates && Move.End == End)
                         {
-                            item.Activate();
-                            HasValidMoves = true;
+                            if (CheckMoveStateValid(MS, Move))
+                            {
+                                ValidMoves.Add(Move);
+                                Move.State = Move.States.Active;
+                            }
                         }
                     }
                 }
                 End = GetCoord(P.C + 1, R);
                 if (End != null && (End.Piece != null && End.Piece.IsHuman != P.IsHuman))
                 {
-                    foreach (var item in Moves)
+                    foreach (var Move in Moves)
                     {
-                        if (item.Start == P.Coordinates && item.End == End)
+                        if (Move.Start == P.Coordinates && Move.End == End)
                         {
-                            item.Activate();
-                            HasValidMoves = true;
+                            if (CheckMoveStateValid(MS, Move))
+                            {
+                                ValidMoves.Add(Move);
+                                Move.State = Move.States.Active;
+                            }
                         }
                     }
                 }
             }
-            if (!HasValidMoves && GameActive)
+            if (ValidMoves.Count == 0 && GameActive)
             {
                 if (PlayersTurn)
                 {
-                    Losses++;
+                    CPUWins++;
+                    //LosingMoves.Add(PreviousMoveState);
                 }
                 else
                 {
-                    Wins++;
+                    PlayerWins++;
+                    LosingMoves.Add(PreviousMoveState);
                 }
-                Status = "P: " + Wins + " -- C: " + Losses;
+                Status = "Player: " + PlayerWins + " -- CPU: " + CPUWins;
                 GameActive = false;
             }
+            return ValidMoves;
+        }
+
+        public bool CheckMoveStateValid(MoveState MS, Move M)
+        {
+            foreach (MoveState MoveState in LosingMoves)
+            {
+                if (MoveState.CompareMoveStates(MS, M))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public class Coord
@@ -276,6 +341,15 @@ namespace LearningPawns
             public int C;
             public int R;
             public Piece Piece;
+
+            public Coord() { }
+
+            public Coord(Piece P)
+            {
+                C = P.Coordinates.C;
+                R = P.Coordinates.R;
+                Piece = P.Coordinates.Piece;
+            }
 
             public void SetPiece(Piece P)
             {
@@ -292,6 +366,7 @@ namespace LearningPawns
                 Piece = P;
                 Grid.SetColumn(Piece.Circle, C - 1);
                 Grid.SetRow(Piece.Circle, R - 1);
+                Piece.Coordinates = BoardState[R- 1][C - 1];
                 Piece.Circle.Visibility = Visibility.Visible;
             }
         }
@@ -341,21 +416,41 @@ namespace LearningPawns
             public Coord End;
             public Polygon Arrow;
             public PointCollection InitialPoints;
-
-            public void Activate(bool Active = true)
+            public enum States { Inactive, Active, Chosen };
+            private States state = States.Active;
+            public States State
             {
-                if (Active)
+                get { return state; }
+                set
                 {
-                    Arrow.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    Arrow.Visibility = Visibility.Collapsed;
+                    if (value == States.Inactive)
+                    {
+                        Arrow.Fill = new SolidColorBrush(Windows.UI.Colors.Gray);
+                    }
+                    else if (value == States.Active)
+                    {
+                        Arrow.Fill = new SolidColorBrush(Windows.UI.Colors.Black);
+                    }
+                    else if (Start.Piece.IsHuman)
+                    {
+                        Arrow.Fill = new SolidColorBrush(Windows.UI.Colors.Red);
+                    }
+                    else
+                    {
+                        Arrow.Fill = new SolidColorBrush(Windows.UI.Colors.Blue);
+                    }
                 }
             }
 
             public void Perform()
             {
+                //if (!Start.Piece.IsHuman)
+                //{
+                    PreviousMoveState = new MoveState(Pieces, this);
+                //}
+
+
+                State = States.Active;
                 Piece Piece = Start.Piece;
                 Piece.Coordinates = End;
                 Grid.SetColumn(Piece.Circle, End.C - 1);
@@ -378,46 +473,45 @@ namespace LearningPawns
 
         private void Reset_Click(object sender, RoutedEventArgs e)
         {
-            Wins = 0;
-            Losses = 0;
-            Status = "P: 0 -- C: 0";
-            //ClearKnowledge();
+            PlayerWins = 0;
+            CPUWins = 0;
+            Status = "Player: 0 -- CPU: 0";
+            PreviousMoveState = null;
+            LosingMoves = new List<MoveState>();
+            PlayersTurn = true;
             ResetBoard();
+            GameActive = true;
+            MovePlayer();
+        }
+
+        private void Auto_Click(object sender, RoutedEventArgs e)
+        {
+            AutoActive = !AutoActive;
+            if (AutoActive)
+            {
+                MovePlayer();
+            }
         }
 
         private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             var A = (this.Parent as Frame).Parent as Border;
-            if (!DoOnce)
+            var CurrentWidth = (A.Width - PageGrid.ColumnDefinitions[0].Width.Value) / 6;
+            var CurrentHeight = A.Height / 6;
+            float Scale = CurrentWidth / InitialWidth <= CurrentHeight / InitialHeight ? (float)(CurrentWidth / InitialWidth) : (float)(CurrentHeight / InitialHeight);
+            foreach (var P in Pieces)
             {
-                UpdateBoardCoordinates();
-                GameBoard = Board;
-                DoOnce = true;
+                P.Refresh(Scale * InitialHeight);
             }
-            else
+            foreach (Move M in Moves)
             {
-                var CurrentWidth = (A.Width - PageGrid.ColumnDefinitions[0].Width.Value) / 6;
-                var CurrentHeight = A.Height / 6;
-                float Scale = CurrentWidth / InitialWidth <= CurrentHeight / InitialHeight ? (float)(CurrentWidth / InitialWidth) : (float)(CurrentHeight / InitialHeight);
-                foreach (var P in new Piece[] { A1, A2, A3, B1, B2, B3 })
-                {
-                    P.Refresh(Scale * InitialHeight);
-                }
-                foreach (Move M in Moves)
-                {
-                    M.Refresh(CurrentWidth, CurrentHeight);
-                }
+                M.Refresh(CurrentWidth, CurrentHeight);
             }
-        }
-
-        private void Grid_PointerMoved(object sender, PointerRoutedEventArgs e)
-        {
-            //Status = Window.Current.CoreWindow.PointerPosition.X + ":" + Window.Current.CoreWindow.PointerPosition.Y;
         }
 
         private void Move_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            PlayersTurn = !PlayersTurn;
+            if (!PlayersTurn) { return; }
             string N = (sender as Polygon).Name.Substring(4);
             var Start = GetCoord(int.Parse(N.Substring(0, 1)), int.Parse(N.Substring(1, 1)));
             var End = GetCoord(int.Parse(N.Substring(2, 1)), int.Parse(N.Substring(3, 1)));
@@ -425,10 +519,153 @@ namespace LearningPawns
             {
                 if (Move.Start == Start && Move.End == End)
                 {
+                    if (Move.State == Move.States.Inactive) { return; }
                     Move.Perform();
                     MoveComputer();
-                    break;
+                    return;
                 }
+            }
+        }
+
+        private void Restart_Click(object sender, RoutedEventArgs e)
+        {
+            PlayersTurn = true;
+            ResetBoard();
+            GameActive = true;
+            MovePlayer();
+        }
+
+        public class MoveState
+        {
+            public Coord A1;
+            public Coord A2;
+            public Coord A3;
+            public Coord B1;
+            public Coord B2;
+            public Coord B3;
+
+            public bool A1Active;
+            public bool A2Active;
+            public bool A3Active;
+            public bool B1Active;
+            public bool B2Active;
+            public bool B3Active;
+
+            public int SC;
+            public int SR;
+            public int EC;
+            public int ER;
+
+            public MoveState(Piece[] Pieces, Move Move = null)
+            {
+                A1 = new Coord(Pieces[0]);
+                A2 = new Coord(Pieces[1]);
+                A3 = new Coord(Pieces[2]);
+                B1 = new Coord(Pieces[3]);
+                B2 = new Coord(Pieces[4]);
+                B3 = new Coord(Pieces[5]);
+
+                A1Active = Pieces[0].Circle.Visibility == Visibility.Visible;
+                A2Active = Pieces[1].Circle.Visibility == Visibility.Visible;
+                A3Active = Pieces[2].Circle.Visibility == Visibility.Visible;
+                B1Active = Pieces[3].Circle.Visibility == Visibility.Visible;
+                B2Active = Pieces[4].Circle.Visibility == Visibility.Visible;
+                B3Active = Pieces[5].Circle.Visibility == Visibility.Visible;
+
+                if (Move != null)
+                {
+                    SC = Move.Start.C;
+                    SR = Move.Start.R;
+                    EC = Move.End.C;
+                    ER = Move.End.R;
+                }
+            }
+
+            public bool CompareMoveStates(MoveState Move2, Move Move)
+            {
+                if (A1Active != Move2.A1Active || A1.C != Move2.A1.C || A1.R != Move2.A1.R)
+                {
+                    return false;
+                }
+                if (A2Active != Move2.A2Active || A2.C != Move2.A2.C || A2.R != Move2.A2.R)
+                {
+                    return false;
+                }
+                if (A3Active != Move2.A3Active || A3.C != Move2.A3.C || A3.R != Move2.A3.R)
+                {
+                    return false;
+                }
+                if (B1Active != Move2.B1Active || B1.C != Move2.B1.C || B1.R != Move2.B1.R)
+                {
+                    return false;
+                }
+                if (B2Active != Move2.B2Active || B2.C != Move2.B2.C || B2.R != Move2.B2.R)
+                {
+                    return false;
+                }
+                if (B3Active != Move2.B3Active || B3.C != Move2.B3.C || B3.R != Move2.B3.R)
+                {
+                    return false;
+                }
+                if (SC != Move.Start.C || SR != Move.Start.R)
+                {
+                    return false;
+                }
+                if (EC != Move.End.C || ER != Move.End.R)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            public bool CompareMoveStates(MoveState Move2)
+            {
+                if (A1Active != Move2.A1Active || A1.C != Move2.A1.C || A1.R != Move2.A1.R)
+                {
+                    return false;
+                }
+                if (A2Active != Move2.A2Active || A2.C != Move2.A2.C || A2.R != Move2.A2.R)
+                {
+                    return false;
+                }
+                if (A3Active != Move2.A3Active || A3.C != Move2.A3.C || A3.R != Move2.A3.R)
+                {
+                    return false;
+                }
+                if (B1Active != Move2.B1Active || B1.C != Move2.B1.C || B1.R != Move2.B1.R)
+                {
+                    return false;
+                }
+                if (B2Active != Move2.B2Active || B2.C != Move2.B2.C || B2.R != Move2.B2.R)
+                {
+                    return false;
+                }
+                if (B3Active != Move2.B3Active || B3.C != Move2.B3.C || B3.R != Move2.B3.R)
+                {
+                    return false;
+                }
+                if (SC != Move2.SC || SR != Move2.SR)
+                {
+                    return false;
+
+                }
+                if (EC != Move2.EC || ER != Move2.ER)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        private void AutoDelayBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var Text = (sender as TextBox).Text;
+            int NewValue;
+            if (Text != "" && int.TryParse(Text, out NewValue) && NewValue >= 50)
+            {
+                AutoDelay = NewValue;
             }
         }
     }

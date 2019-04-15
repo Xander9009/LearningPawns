@@ -40,11 +40,12 @@ namespace LearningPawns
             }
         }
         public int ArrowHeadSideLength = 50;
-        public List<Polygon> Highlights = new List<Polygon>();
         private bool PlayersTurn = true;
+        public Grid GameBoard;
+        public bool GameActive = false;
 
-        private double H;
-        private double W;
+        private static double InitialHeight = 120;
+        private static double InitialWidth= 163;
 
         public Piece A1;
         public Piece A2;
@@ -52,12 +53,6 @@ namespace LearningPawns
         public Piece B1;
         public Piece B2;
         public Piece B3;
-        public Piece mA1;
-        public Piece mA2;
-        public Piece mA3;
-        public Piece mB1;
-        public Piece mB2;
-        public Piece mB3;
 
         public MainPage()
         {
@@ -69,18 +64,10 @@ namespace LearningPawns
             B1 = new Piece() { Circle = eB1, IsHuman = true };
             B2 = new Piece() { Circle = eB2, IsHuman = true };
             B3 = new Piece() { Circle = eB3, IsHuman = true };
-            mA1 = new Piece() { Circle = emA1 };
-            mA2 = new Piece() { Circle = emA2 };
-            mA3 = new Piece() { Circle = emA3 };
-            mB1 = new Piece() { Circle = emB1, IsHuman = true };
-            mB2 = new Piece() { Circle = emB2, IsHuman = true };
-            mB3 = new Piece() { Circle = emB3, IsHuman = true };
         }
 
         private void SetBoardCoordinates()
         {
-            DoOnce = true;
-
             BoardState = new List<List<Coord>>() { new List<Coord>() { new Coord() { C = 1, R = 1 }, new Coord() { C = 2, R = 1 }, new Coord() { C = 3, R = 1 } },
                                                    new List<Coord>() { new Coord() { C = 1, R = 2 }, new Coord() { C = 2, R = 2 }, new Coord() { C = 3, R = 2 } },
                                                    new List<Coord>() { new Coord() { C = 1, R = 3 }, new Coord() { C = 2, R = 3 }, new Coord() { C = 3, R = 3 } }
@@ -122,33 +109,10 @@ namespace LearningPawns
             Moves.Add(new Move() { Arrow = Move3322, Start = BoardState[2][2], End = BoardState[1][1] });
             Moves.Add(new Move() { Arrow = Move3332, Start = BoardState[2][2], End = BoardState[1][2] });
 
-            foreach (var Row in BoardState)
+            foreach (var M in Moves)
             {
-                foreach (var C in Row)
-                {
-                    if (C.Piece != null)
-                    {
-                        C.Piece.Margin = new Thickness(C.X, C.Y, 0, 0);
-                    }
-                }
+                M.InitialPoints = M.Arrow.Points;
             }
-        }
-
-        private void SetMatchboxCoordinates()
-        {
-            mDoOnce = true;
-
-            MatchboxState = new List<List<Coord>>() { new List<Coord>() { new Coord() { C = 1, R = 1 }, new Coord() { C = 2, R = 1 }, new Coord() { C = 3, R = 1 } },
-                                                      new List<Coord>() { new Coord() { C = 1, R = 2 }, new Coord() { C = 2, R = 2 }, new Coord() { C = 3, R = 2 } },
-                                                      new List<Coord>() { new Coord() { C = 1, R = 3 }, new Coord() { C = 2, R = 3 }, new Coord() { C = 3, R = 3 } }
-            };
-
-            mA1.Coordinates = MatchboxState[0][0];
-            mA2.Coordinates = MatchboxState[0][1];
-            mA3.Coordinates = MatchboxState[0][2];
-            mB1.Coordinates = MatchboxState[2][0];
-            mB2.Coordinates = MatchboxState[2][1];
-            mB3.Coordinates = MatchboxState[2][2];
         }
 
         private void UpdateBoardCoordinates()
@@ -158,7 +122,6 @@ namespace LearningPawns
                 ResetBoard();
             }
 
-            /*
             var A = (this.Parent as Frame).Parent as Border;
             var W = A.Width - PageGrid.ColumnDefinitions[0].Width.Value;
             var H = A.Height;
@@ -176,82 +139,7 @@ namespace LearningPawns
             B2.Width = PieceSize;
             B3.Height = PieceSize;
             B3.Width = PieceSize;
-
-            BoardState[0][0].X = (int)(((W / 3) - PieceSize) / 2);
-            BoardState[0][0].Y = (int)(((H / 3) - PieceSize) / 2);
-            BoardState[0][1].X = (int)((W / 3) + (((W / 3) - PieceSize) / 2));
-            BoardState[0][1].Y = (int)(((H / 3) - PieceSize) / 2);
-            BoardState[0][2].X = (int)(((W / 3) * 2) + (((W / 3) - PieceSize) / 2));
-            BoardState[0][2].Y = (int)(((H / 3) - PieceSize) / 2);
-            BoardState[1][0].X = (int)(((W / 3) - PieceSize) / 2);
-            BoardState[1][0].Y = (int)((H / 3) + (((H / 3) - PieceSize) / 2));
-            BoardState[1][1].X = (int)((W / 3) + (((W / 3) - PieceSize) / 2));
-            BoardState[1][1].Y = (int)((H / 3) + (((H / 3) - PieceSize) / 2));
-            BoardState[1][2].X = (int)(((W / 3) * 2) + (((W / 3) - PieceSize) / 2));
-            BoardState[1][2].Y = (int)((H / 3) + (((H / 3) - PieceSize) / 2));
-            BoardState[2][0].X = (int)(((W / 3) - PieceSize) / 2);
-            BoardState[2][0].Y = (int)(((H / 3) * 2) + (((H / 3) - PieceSize) / 2));
-            BoardState[2][1].X = (int)((W / 3) + (((W / 3) - PieceSize) / 2));
-            BoardState[2][1].Y = (int)(((H / 3) * 2) + (((H / 3) - PieceSize) / 2));
-            BoardState[2][2].X = (int)(((W / 3) * 2) + (((W / 3) - PieceSize) / 2));
-            BoardState[2][2].Y = (int)(((H / 3) * 2) + (((H / 3) - PieceSize) / 2));
-            */
             
-        }
-
-        private void UpdateMatchboxCoordinates()
-        {
-            if (!mDoOnce)
-            {
-                ResetMatchbox();
-            }
-            var W = PageGrid.ColumnDefinitions[0].Width.Value;
-            var H = W;
-
-            int PieceSize = (int)(W / 6);
-            mA1.Height = PieceSize;
-            mA1.Width = PieceSize;
-            mA2.Height = PieceSize;
-            mA2.Width = PieceSize;
-            mA3.Height = PieceSize;
-            mA3.Width = PieceSize;
-            mB1.Height = PieceSize;
-            mB1.Width = PieceSize;
-            mB2.Height = PieceSize;
-            mB2.Width = PieceSize;
-            mB3.Height = PieceSize;
-            mB3.Width = PieceSize;
-
-            MatchboxState[0][0].X = (int)(((W / 3) - PieceSize) / 2);
-            MatchboxState[0][0].Y = (int)(((H / 3) - PieceSize) / 2);
-            MatchboxState[0][1].X = (int)((W / 3) + (((W / 3) - PieceSize) / 2));
-            MatchboxState[0][1].Y = (int)(((H / 3) - PieceSize) / 2);
-            MatchboxState[0][2].X = (int)(((W / 3) * 2) + (((W / 3) - PieceSize) / 2));
-            MatchboxState[0][2].Y = (int)(((H / 3) - PieceSize) / 2);
-            MatchboxState[1][0].X = (int)(((W / 3) - PieceSize) / 2);
-            MatchboxState[1][0].Y = (int)((H / 3) + (((H / 3) - PieceSize) / 2));
-            MatchboxState[1][1].X = (int)((W / 3) + (((W / 3) - PieceSize) / 2));
-            MatchboxState[1][1].Y = (int)((H / 3) + (((H / 3) - PieceSize) / 2));
-            MatchboxState[1][2].X = (int)(((W / 3) * 2) + (((W / 3) - PieceSize) / 2));
-            MatchboxState[1][2].Y = (int)((H / 3) + (((H / 3) - PieceSize) / 2));
-            MatchboxState[2][0].X = (int)(((W / 3) - PieceSize) / 2);
-            MatchboxState[2][0].Y = (int)(((H / 3) * 2) + (((H / 3) - PieceSize) / 2));
-            MatchboxState[2][1].X = (int)((W / 3) + (((W / 3) - PieceSize) / 2));
-            MatchboxState[2][1].Y = (int)(((H / 3) * 2) + (((H / 3) - PieceSize) / 2));
-            MatchboxState[2][2].X = (int)(((W / 3) * 2) + (((W / 3) - PieceSize) / 2));
-            MatchboxState[2][2].Y = (int)(((H / 3) * 2) + (((H / 3) - PieceSize) / 2));
-
-            foreach (var Row in MatchboxState)
-            {
-                foreach (var C in Row)
-                {
-                    if (C.Piece != null)
-                    {
-                        C.Piece.Margin = new Thickness(C.X, C.Y, 0, 0);
-                    }
-                }
-            }
-            FindMoves();
         }
 
         private void ResetBoard()
@@ -264,20 +152,6 @@ namespace LearningPawns
             GetCoord(1, 3).SetPiece(B1);
             GetCoord(2, 3).SetPiece(B2);
             GetCoord(3, 3).SetPiece(B3);
-        }
-
-        private void ResetMatchbox()
-        {
-            SetMatchboxCoordinates();
-
-            GetMCoord(1, 1).SetPiece(mA1);
-            GetMCoord(2, 1).SetPiece(mA2);
-            GetMCoord(3, 1).SetPiece(mA3);
-            GetMCoord(1, 3).SetPiece(mB1);
-            GetMCoord(2, 3).SetPiece(mB2);
-            GetMCoord(3, 3).SetPiece(mB3);
-
-            UpdateMatchboxCoordinates();
         }
 
         public Coord GetCoord(int C, int R)
@@ -300,8 +174,12 @@ namespace LearningPawns
 
         private void Begin_Click(object sender, RoutedEventArgs e)
         {
-            Status = "Starting";
-            MovePlayer();
+            if (!GameActive)
+            {
+                ResetBoard();
+                GameActive = true;
+                MovePlayer();
+            }
         }
 
         private void MovePlayer()
@@ -331,6 +209,7 @@ namespace LearningPawns
             {
                 item.Activate(false);
             }
+            bool HasValidMoves = false;
             foreach (var P in Pieces)
             {
                 if (P.Circle.Visibility != Visibility.Visible) { continue; }
@@ -348,6 +227,7 @@ namespace LearningPawns
                         if (item.Start == P.Coordinates && item.End == End)
                         {
                             item.Activate();
+                            HasValidMoves = true;
                         }
                     }
                 }
@@ -359,6 +239,7 @@ namespace LearningPawns
                         if (item.Start == P.Coordinates && item.End == End)
                         {
                             item.Activate();
+                            HasValidMoves = true;
                         }
                     }
                 }
@@ -370,9 +251,23 @@ namespace LearningPawns
                         if (item.Start == P.Coordinates && item.End == End)
                         {
                             item.Activate();
+                            HasValidMoves = true;
                         }
                     }
                 }
+            }
+            if (!HasValidMoves && GameActive)
+            {
+                if (PlayersTurn)
+                {
+                    Losses++;
+                }
+                else
+                {
+                    Wins++;
+                }
+                Status = "P: " + Wins + " -- C: " + Losses;
+                GameActive = false;
             }
         }
 
@@ -380,8 +275,6 @@ namespace LearningPawns
         {
             public int C;
             public int R;
-            public int X;
-            public int Y;
             public Piece Piece;
 
             public void SetPiece(Piece P)
@@ -397,7 +290,9 @@ namespace LearningPawns
                     }
                 }
                 Piece = P;
-                Piece.Circle.Margin = new Thickness(X, Y, 0, 0);
+                Grid.SetColumn(Piece.Circle, C - 1);
+                Grid.SetRow(Piece.Circle, R - 1);
+                Piece.Circle.Visibility = Visibility.Visible;
             }
         }
 
@@ -433,6 +328,11 @@ namespace LearningPawns
                 set { Coordinates.R = value; }
             }
 
+            public void Refresh(double Scale)
+            {
+                Circle.Width = Scale;
+                Circle.Height = Scale;
+            }
         }
 
         public class Move
@@ -440,6 +340,7 @@ namespace LearningPawns
             public Coord Start;
             public Coord End;
             public Polygon Arrow;
+            public PointCollection InitialPoints;
 
             public void Activate(bool Active = true)
             {
@@ -457,16 +358,31 @@ namespace LearningPawns
             {
                 Piece Piece = Start.Piece;
                 Piece.Coordinates = End;
-                Piece.Circle.Margin = new Thickness(Piece.Coordinates.X, Piece.Coordinates.Y, 0, 0);
+                Grid.SetColumn(Piece.Circle, End.C - 1);
+                Grid.SetRow(Piece.Circle, End.R - 1);
+                if (End.Piece != null)
+                {
+                    End.Piece.Circle.Visibility = Visibility.Collapsed;
+                }
                 End.Piece = Piece;
                 Start.Piece = null;
+            }
+
+            public void Refresh(double CurrentWidth, double CurrentHeight)
+            {
+                Arrow.Points = new PointCollection() { new Point((InitialPoints[0].X * CurrentWidth) / InitialWidth, (InitialPoints[0].Y * CurrentHeight) / InitialHeight),
+                                                       new Point((InitialPoints[1].X * CurrentWidth) / InitialWidth, (InitialPoints[1].Y * CurrentHeight) / InitialHeight),
+                                                       new Point((InitialPoints[2].X * CurrentWidth) / InitialWidth, (InitialPoints[2].Y * CurrentHeight) / InitialHeight) };
             }
         }
 
         private void Reset_Click(object sender, RoutedEventArgs e)
         {
+            Wins = 0;
+            Losses = 0;
+            Status = "P: 0 -- C: 0";
+            //ClearKnowledge();
             ResetBoard();
-            ResetMatchbox();
         }
 
         private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -475,38 +391,33 @@ namespace LearningPawns
             if (!DoOnce)
             {
                 UpdateBoardCoordinates();
-                UpdateMatchboxCoordinates();
-                W = A.Width - PageGrid.ColumnDefinitions[0].Width.Value;
-                H = A.Height;
+                GameBoard = Board;
+                DoOnce = true;
             }
             else
             {
-                var NW = A.Width - PageGrid.ColumnDefinitions[0].Width.Value;
-                var NH = A.Height;
-                var SW = NW / W;
-                var SH = NH / H;
-                float Scale = SW <= SH ? (float)SW : (float)SH;
-                Piece[] Pieces = new Piece[] { A1, A2, A3, B1, B2, B3 };
-                foreach (var P in Pieces)
+                var CurrentWidth = (A.Width - PageGrid.ColumnDefinitions[0].Width.Value) / 6;
+                var CurrentHeight = A.Height / 6;
+                float Scale = CurrentWidth / InitialWidth <= CurrentHeight / InitialHeight ? (float)(CurrentWidth / InitialWidth) : (float)(CurrentHeight / InitialHeight);
+                foreach (var P in new Piece[] { A1, A2, A3, B1, B2, B3 })
                 {
-                    P.Circle.Scale = new System.Numerics.Vector3(Scale, Scale, 0);
+                    P.Refresh(Scale * InitialHeight);
                 }
                 foreach (Move M in Moves)
                 {
-                    M.Arrow.Scale = new System.Numerics.Vector3(Scale, Scale, 0);
+                    M.Refresh(CurrentWidth, CurrentHeight);
                 }
             }
         }
 
         private void Grid_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            Status = Window.Current.CoreWindow.PointerPosition.X + ":" + Window.Current.CoreWindow.PointerPosition.Y;
+            //Status = Window.Current.CoreWindow.PointerPosition.X + ":" + Window.Current.CoreWindow.PointerPosition.Y;
         }
 
         private void Move_Tapped(object sender, TappedRoutedEventArgs e)
         {
             PlayersTurn = !PlayersTurn;
-            Status = (sender as Polygon).Name;
             string N = (sender as Polygon).Name.Substring(4);
             var Start = GetCoord(int.Parse(N.Substring(0, 1)), int.Parse(N.Substring(1, 1)));
             var End = GetCoord(int.Parse(N.Substring(2, 1)), int.Parse(N.Substring(3, 1)));
